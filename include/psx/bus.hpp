@@ -7,7 +7,7 @@ public:
     Bus(Bios& bios) : bios(bios) { }
     Bios& bios;
     template <typename T> T read(std::uint32_t addr) {
-        if (auto offset = map::BIOS.contains(addr)) {
+        if (auto offset = map::BIOS.contains(addr); offset != UINT32_MAX) {
             return this->bios.read<T>(offset);
         }
         std::cerr << "[BUS] Unhandled read at address: 0x" << std::hex << addr << std::endl;

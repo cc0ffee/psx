@@ -8,6 +8,7 @@ set(SOURCES
     src/main.cpp
     src/mem/bus.cpp
     src/cpu/cpu.cpp
+    src/cpu/instruction.cpp
 )
 
 set(CMAKE_BUILD_TYPE Debug)
