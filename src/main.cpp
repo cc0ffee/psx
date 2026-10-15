@@ -1,5 +1,6 @@
 #include "psx/bios.hpp"
 #include "psx/bus.hpp"
+#include "psx/cpu.hpp"
 #include <iostream>
 
 int main(int argc, char* argv[]) {
@@ -10,10 +11,15 @@ int main(int argc, char* argv[]) {
     }
 
     Bios bios(argv[1]);
-    
+    Bus bus(bios);
+    CPU cpu(bus);
     std::cout << "Loaded Bios from Path: " << bios.biosPath << '\n';
     std::cout << "Is Valid (512KB): " << bios.isRegularBios << '\n';
-    std::cout << "First instruction: " << std::hex << bios.load<std::uint32_t>(0x0) << std::endl;
+    std::cout << "First instruction: " << std::hex << bios.read<std::uint32_t>(0x0) << std::endl;
+
+    while (true) {
+        cpu.run();
+    }
 
     return 0;
 }

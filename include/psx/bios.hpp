@@ -29,7 +29,7 @@ public:
     std::vector<std::uint8_t> biosData{};
     bool isRegularBios{true};
     std::string biosPath;
-    template <typename T> T load(std::uint32_t offset) {
+    template <typename T> T read(std::uint32_t offset) {
         T val = 0;
 
         for (std::size_t i = 0; i < sizeof(T); ++i) {
