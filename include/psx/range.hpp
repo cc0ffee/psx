@@ -14,4 +14,5 @@ namespace map {
     constexpr Range BIOS{0xBFC00000, 512 * 1024};
     constexpr Range MEMCONTROL{0x1F801000, 36};
     constexpr Range DRAM_CTRL{0x1F801060, 4};
+    constexpr Range CACHE_CTRL{0xFFFE0130, 4};
 }

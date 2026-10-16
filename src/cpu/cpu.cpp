@@ -18,6 +18,9 @@ void CPU::decodeExec(Instruction& instruction) {
                 case 0x00:
                     this->OP_SLL(instruction);
                     break;
+                case 0x25:
+                    this->OP_OR(instruction);
+                    break;
                 default:
                     std::cerr << "[CPU] Unhandled 0x00 Instruction: 0x" << std::hex << instruction.funct() << std::endl;
                     throw std::exception();
@@ -105,4 +108,13 @@ void CPU::OP_J(Instruction &instruction) {
     std::uint32_t target = instruction.target();
     
     this->delayed_branch = ((this->pc + 4) & 0xF0000000) | (target << 2);
+}
+
+void CPU::OP_OR(Instruction &instruction) {
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+    std::uint32_t rd = instruction.rd();
+    
+    std::uint32_t value = this->getReg(rs) | this->getReg(rt);
+    this->setReg(rd, value);
 }

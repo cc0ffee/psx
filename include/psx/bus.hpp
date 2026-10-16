@@ -36,7 +36,10 @@ public:
                     return;
             }
         } else if (auto offset = map::DRAM_CTRL.contains(addr); offset != UINT32_MAX) {
-            std::cout << "[BUS] STUB: Unhandled write to DRAM_CTRL Register." << '\n';
+            std::cout << "[BUS -> STUB]: Unhandled write to DRAMs_CTRL Register." << '\n';
+            return;
+        } else if (auto offset = map::CACHE_CTRL.contains(addr); offset != UINT32_MAX) {
+            std::cout << "[BUS -> STUB]: Unhandled write to CACHE_CTRL Register." << '\n';
             return;
         }
         std::cerr << "[BUS] Unhandled write at address: 0x" << std::hex << val << " @ 0x" << addr << std::endl;
