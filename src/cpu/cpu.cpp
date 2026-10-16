@@ -7,21 +7,40 @@ void CPU::run() {
     std::uint32_t next_pc = delayed_branch.value_or(this->pc + 4);
     delayed_branch.reset();
     pc = next_pc;
-    next_pc += 4;
 
     decodeExec(instruction);
 }
 
 void CPU::decodeExec(Instruction& instruction) {
-    switch(instruction.func()) {
+    switch(instruction.op()) {
+        case 0x00: {
+            switch(instruction.funct()) {
+                case 0x00:
+                    this->OP_SLL(instruction);
+                    break;
+                default:
+                    std::cerr << "[CPU] Unhandled 0x00 Instruction: 0x" << std::hex << instruction.funct() << std::endl;
+                    throw std::exception();
+            }
+            break;
+        }
+        case 0x02:
+            this->OP_J(instruction);
+            break;
+        case 0x09:
+            this->OP_ADDIU(instruction);
+            break;
         case 0x0D:
             this->OP_ORI(instruction);
             break;
         case 0x0F:
             this->OP_LUI(instruction);
             break;
+        case 0x2B:
+            this->OP_SW(instruction);
+            break;
         default:
-            std::cerr << "[CPU] Unhandled Instruction: " << std::hex << instruction.opcode << "(0x" << instruction.func() << ")" << std::endl;
+            std::cerr << "[CPU] Unhandled Instruction: " << std::hex << instruction.opcode << "(0x" << instruction.op() << ")" << std::endl;
             throw std::exception();
     }
 }
@@ -50,4 +69,40 @@ void CPU::OP_LUI(Instruction& instruction) {
     std::uint32_t value = imm << 16u;
 
     this->setReg(rt, value);
+}
+
+void CPU::OP_SW(Instruction& instruction) {
+    std::uint32_t imm_se = instruction.imm_se();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::uint32_t addr = getReg(rs) + imm_se;
+    auto value = getReg(rt);
+
+    this->write<std::uint32_t>(addr, value);
+}
+
+void CPU::OP_SLL(Instruction &instruction) {
+    std::uint32_t sa = instruction.shamt();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rd = instruction.rd();
+
+    std::uint32_t value = getReg(rt) << sa;
+    setReg(rd, value);
+}
+
+
+void CPU::OP_ADDIU(Instruction &instruction) {
+    std::uint32_t imm = instruction.imm_se();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::uint32_t value = getReg(rs) + imm;
+    setReg(rt, value);
+}
+
+void CPU::OP_J(Instruction &instruction) {
+    std::uint32_t target = instruction.target();
+    
+    this->delayed_branch = ((this->pc + 4) & 0xF0000000) | (target << 2);
 }
