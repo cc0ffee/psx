@@ -22,6 +22,9 @@ private:
     std::optional<std::uint32_t> delayed_branch{};
     std::uint32_t hi{};
     std::uint32_t lo{};
+
+    std::uint32_t sr{0};
+
     Bus& bus;
     void decodeExec(Instruction& instruction);
     template <typename T> T read(std::uint32_t addr) {
@@ -102,4 +105,7 @@ private:
     void OP_SWC1(Instruction& instruction);
     void OP_SWC2(Instruction& instruction);
     void OP_SWC3(Instruction& instruction);
+
+    void MTC0(Instruction& instruction);
+    void branch(std::uint32_t offset);
 };

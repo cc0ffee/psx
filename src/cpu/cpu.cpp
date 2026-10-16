@@ -39,6 +39,8 @@ void CPU::decodeExec(Instruction& instruction) {
         case 0x0F:
             this->OP_LUI(instruction);
             break;
+        case 0x10:
+            this->OP_COP0(instruction);
         case 0x2B:
             this->OP_SW(instruction);
             break;
@@ -75,6 +77,11 @@ void CPU::OP_LUI(Instruction& instruction) {
 }
 
 void CPU::OP_SW(Instruction& instruction) {
+    if ((this->sr & 0x10000) != 0) {
+        std::cout << "[OP_SW -> STUB] Write while cache is isolated." << '\n';
+        return;
+    } 
+
     std::uint32_t imm_se = instruction.imm_se();
     std::uint32_t rt = instruction.rt();
     std::uint32_t rs = instruction.rs();
@@ -117,4 +124,31 @@ void CPU::OP_OR(Instruction &instruction) {
     
     std::uint32_t value = this->getReg(rs) | this->getReg(rt);
     this->setReg(rd, value);
+}
+
+void CPU::OP_COP0(Instruction &instruction) {
+    switch(instruction.rs()) {
+        case 0x4:
+            this->MTC0(instruction);
+            break;
+        default:
+            std::cerr << "[CPU] Unhandled COP0 instruction: 0x" << std::hex << instruction.rs() << std::endl;
+            throw std::exception();
+    }
+}
+
+void CPU::MTC0(Instruction& instruction) {
+    std::uint32_t rd = instruction.rd();
+    std::uint32_t rt = instruction.rt();
+
+    std::uint32_t value = getReg(rt);
+
+    switch(rd) {
+        case 0xC:
+            this->sr = value;
+            break;
+        default:
+            std::cerr << "[CPU] Unhandled COP0 register: 0x" << std::hex << rd << std::endl;
+            throw std::exception();
+    }
 }
