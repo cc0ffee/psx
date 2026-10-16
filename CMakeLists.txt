@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(psx)
-
-set(CXX_STANDARD c++17)
+project(psx LANGUAGES CXX)
 
 set(SOURCES
     src/main.cpp
@@ -11,10 +9,12 @@ set(SOURCES
     src/cpu/instruction.cpp
 )
 
-set(CMAKE_BUILD_TYPE Debug)
-set(CMAKE_EXPORT_COMPILE_COMMAND ON)
-
 add_executable(psx ${SOURCES})
-set(TARGET_NAME psx)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
+set_target_properties(psx PROPERTIES
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED ON
+    CXX_EXTENSIONS OFF
+)
+
+target_include_directories(psx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
