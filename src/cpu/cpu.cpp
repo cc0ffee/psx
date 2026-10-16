@@ -30,6 +30,9 @@ void CPU::decodeExec(Instruction& instruction) {
         case 0x02:
             this->OP_J(instruction);
             break;
+        case 0x05:
+            this->OP_BNE(instruction);
+            break;
         case 0x09:
             this->OP_ADDIU(instruction);
             break;
@@ -151,4 +154,46 @@ void CPU::MTC0(Instruction& instruction) {
             std::cerr << "[CPU] Unhandled COP0 register: 0x" << std::hex << rd << std::endl;
             throw std::exception();
     }
+}
+
+void CPU::OP_BNE(Instruction& instruction) {
+    std::uint32_t imm_se = instruction.imm_se();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    if (this->getReg(rs) != this->getReg(rt)) {
+        this->branch(imm_se);
+    }
+}
+
+void CPU::OP_BEQ(Instruction& instruction) {
+    std::uint32_t imm_se = instruction.imm_se();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    if (this->getReg(rs) == this->getReg(rt)) {
+        this->branch(imm_se);
+    }
+}
+
+void CPU::OP_BGTZ(Instruction& instruction) {
+    std::uint32_t imm_se = instruction.imm_se();
+    std::uint32_t rs = instruction.rs();
+
+    if (this->getReg(rs) > 0) {
+        this->branch(imm_se);
+    }
+}
+
+void CPU::OP_BLEZ(Instruction& instruction) {
+    std::uint32_t imm_se = instruction.imm_se();
+    std::uint32_t rs = instruction.rs();
+
+    if (this->getReg(rs) <= 0) {
+        this->branch(imm_se);
+    }
+}
+
+void CPU::branch(std::uint32_t offset) {
+    delayed_branch = pc + (offset << 2);
 }
