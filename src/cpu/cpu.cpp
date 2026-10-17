@@ -29,6 +29,12 @@ void CPU::decodeExec(Instruction& instruction) {
                 case 0x00:
                     this->OP_SLL(instruction);
                     break;
+                case 0x02:
+                    this->OP_SRL(instruction);
+                    break;
+                case 0x03:
+                    this->OP_SRA(instruction);
+                    break;
                 case 0x08:
                     this->OP_JR(instruction);
                     break;
@@ -507,6 +513,26 @@ void CPU::OP_SLTIU(Instruction& instruction) {
 
     std::uint32_t value = s < imm_se;
     setReg(rt, value);
+}
+
+void CPU::OP_SRA(Instruction& instruction) {
+    std::int32_t sa = instruction.shamt();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rd = instruction.rd();
+
+    std::int32_t s = static_cast<std::int32_t>(getReg(rt));
+
+    std::int32_t value = s >> sa;
+    setReg(rd, static_cast<std::uint32_t>(value));
+}
+
+void CPU::OP_SRL(Instruction& instruction) {
+    std::int32_t sa = instruction.shamt();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rd = instruction.rd();
+
+    std::uint32_t value = getReg(rt) >> sa;
+    setReg(rd, value);
 }
 
 void CPU::OP_DIV(Instruction& instruction) {
