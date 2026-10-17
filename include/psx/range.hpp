@@ -11,8 +11,14 @@ struct Range {
 };
 
 namespace map {
-    constexpr Range BIOS{0xBFC00000, 512 * 1024};
+    constexpr Range RAM{0x00000000, 4 * 1024 * 1024};
+    constexpr Range BIOS{0x1FC00000, 512 * 1024};
     constexpr Range MEMCONTROL{0x1F801000, 36};
     constexpr Range DRAM_CTRL{0x1F801060, 4};
     constexpr Range CACHE_CTRL{0xFFFE0130, 4};
+    constexpr Range SPU{0x1F801C00, 640};
+    constexpr Range EXPANSION_1{0x1f000000, 0x800000};
+    constexpr Range EXPANSION_2{0x1f802000, 0x1000};
+    constexpr Range IRQ_CTRL{0x1f801070, 0x8};
+    constexpr Range TIMERS{0x1f801100, 0x30};
 }

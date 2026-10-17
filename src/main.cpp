@@ -11,7 +11,8 @@ int main(int argc, char* argv[]) {
     }
 
     Bios bios(argv[1]);
-    Bus bus(bios);
+    RAM ram;
+    Bus bus(bios, ram);
     CPU cpu(bus);
     std::cout << "Loaded Bios from Path: " << bios.biosPath << '\n';
     std::cout << "Is Valid (512KB): " << bios.isRegularBios << '\n';
