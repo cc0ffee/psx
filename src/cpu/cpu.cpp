@@ -35,8 +35,38 @@ void CPU::decodeExec(Instruction& instruction) {
                 case 0x09:
                     this->OP_JALR(instruction);
                     break;
+                case 0x10:
+                    this->OP_MFHI(instruction);
+                    break;
+                case 0x12:
+                    this->OP_MFLO(instruction);
+                    break;
+                case 0x1A:
+                    this->OP_DIV(instruction);
+                    break;
+                case 0x1B:
+                    this->OP_DIVU(instruction);
+                    break;
+                case 0x20:
+                    this->OP_ADD(instruction);
+                    break;
+                case 0x21:
+                    this->OP_ADDU(instruction);
+                    break;
+                case 0x23:
+                    this->OP_SUBU(instruction);
+                    break;
+                case 0x24:
+                    this->OP_AND(instruction);
+                    break;
                 case 0x25:
                     this->OP_OR(instruction);
+                    break;
+case 0x2A:
+                    this->OP_SLT(instruction);
+                    break;
+                case 0x2B:
+                    this->OP_SLTU(instruction);
                     break;
                 default:
                     std::cerr << "[CPU] Unhandled 0x00 Instruction: 0x" << std::hex << instruction.funct() << std::endl;
@@ -70,6 +100,15 @@ case 0x06:
             break;
         case 0x09:
             this->OP_ADDIU(instruction);
+            break;
+        case 0x0A:
+            this->OP_SLTI(instruction);
+            break;
+        case 0x0B:
+            this->OP_SLTIU(instruction);
+            break;
+        case 0x0C:
+            this->OP_ANDI(instruction);
             break;
         case 0x0D:
             this->OP_ORI(instruction);
@@ -253,6 +292,39 @@ void CPU::branch(std::uint32_t offset) {
     delayed_branch = pc + (offset << 2);
 }
 
+void CPU::OP_ADD(Instruction& instruction) {
+    std::uint32_t rd = instruction.rd();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::int32_t s = static_cast<std::int32_t>(getReg(rs));
+    std::int32_t t = static_cast<std::int32_t>(getReg(rt));
+
+    if ((t > 0 && s > std::numeric_limits<std::int32_t>::max() - t) ||
+        (t < 0 && s < std::numeric_limits<std::int32_t>::min() - t)) {
+        throw std::runtime_error("[CPU] ADD OVERFLOW");
+    }
+
+    std::int32_t value = s + t;
+    setReg(rd, static_cast<std::uint32_t>(value));
+}
+
+void CPU::OP_ADDI(Instruction& instruction) {
+    std::int32_t imm_se = instruction.imm_se();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::int32_t s = static_cast<std::int32_t>(getReg(rs));
+
+    if ((imm_se > 0 && s > std::numeric_limits<std::int32_t>::max() - imm_se) ||
+        (imm_se < 0 && s < std::numeric_limits<std::int32_t>::min() - imm_se)) {
+        throw std::runtime_error("[CPU] ADDI OVERFLOW");
+    }
+
+    std::int32_t value = s + imm_se;
+    setReg(rt, static_cast<std::uint32_t>(value));
+}
+
 void CPU::OP_LW(Instruction& instruction) {
     if ((this->sr & 0x10000) != 0) {
         std::cout << "[OP_LW -> STUB] Read while cache is isolated." << '\n';
@@ -266,6 +338,33 @@ void CPU::OP_LW(Instruction& instruction) {
     std::uint32_t addr = getReg(rs) + imm_se;
 
     load = {rt, this->read<std::uint32_t>(addr)};
+}
+
+void CPU::OP_SLTU(Instruction& instruction) {
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+    std::uint32_t rd = instruction.rd();
+
+    std::uint32_t value = this->getReg(rs) < this->getReg(rt);
+    this->setReg(rd, value);
+}
+
+void CPU::OP_ADDU(Instruction &instruction) {
+    std::uint32_t rd = instruction.rd();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::uint32_t value = getReg(rs) + getReg(rt);
+    setReg(rd, value);
+}
+
+void CPU::OP_SUBU(Instruction &instruction) {
+    std::uint32_t rd = instruction.rd();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::uint32_t value = getReg(rs) - getReg(rt);
+    setReg(rd, value);
 }
 
 void CPU::OP_SH(Instruction& instruction) {
@@ -288,6 +387,17 @@ void CPU::OP_JAL(Instruction& instruction) {
     setReg(31, pc + 4);
     OP_J(instruction);
 }
+
+void CPU::OP_ANDI(Instruction& instruction) {
+    std::uint32_t imm = instruction.imm();
+    std::uint32_t rs = instruction.rs();
+    std::uint32_t rt = instruction.rt();
+
+    std::uint32_t value = this->gRegs[rs] & imm;
+
+    this->setReg(rt, value);
+}
+
 
 void CPU::OP_SB(Instruction& instruction) {
     if ((this->sr & 0x10000) != 0) {
@@ -377,3 +487,83 @@ void CPU::OP_BCONDZ(Instruction& instruction) {
     }
 }
 
+void CPU::OP_SLTI(Instruction& instruction) {
+    std::int32_t imm_se = instruction.imm_se();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::int32_t s = static_cast<std::int32_t>(getReg(rs));
+
+    std::int32_t value = s < imm_se;
+    setReg(rt, static_cast<std::uint32_t>(value));
+}
+
+void CPU::OP_SLTIU(Instruction& instruction) {
+    std::uint32_t imm_se = instruction.imm_se();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::uint32_t s = getReg(rs);
+
+    std::uint32_t value = s < imm_se;
+    setReg(rt, value);
+}
+
+void CPU::OP_DIV(Instruction& instruction) {
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    auto n = static_cast<std::int32_t>(getReg(rs));
+    auto d = static_cast<std::int32_t>(getReg(rt));
+
+    if (d == 0) {
+        this->hi = static_cast<std::uint32_t>(n);
+
+        if (n >= 0) {
+            this->lo = 0xFFFFFFFF;
+        } else {
+            this->lo = 1;
+        }
+    } else if (static_cast<std::uint32_t>(n) == 0x80000000 && (d == -1)) {
+        this->hi = 0;
+        this->lo = 0x80000000;
+    } else {
+        this->hi = static_cast<std::uint32_t>(n % d);
+        this->lo = static_cast<std::uint32_t>(n / d);
+    }
+}
+
+void CPU::OP_DIVU(Instruction& instruction) {
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    auto n = getReg(rs);
+    auto d = getReg(rt);
+
+    if (d == 0) {
+        this->hi = n;
+        this->lo = 0xFFFFFFFF;
+    } else {
+        this->hi = (n % d);
+        this->lo = (n / d);
+    }
+}
+
+void CPU::OP_MFLO(Instruction &instruction) {
+    std::uint32_t rd = instruction.rd();
+    this->setReg(rd, this->lo);
+}
+
+void CPU::OP_MFHI(Instruction &instruction) {
+    std::uint32_t rd = instruction.rd();
+    this->setReg(rd, this->hi);
+}
+
+void CPU::OP_SLT(Instruction& instruction) {
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+    std::uint32_t rd = instruction.rd();
+
+    std::uint32_t value = static_cast<std::int32_t>(this->getReg(rs)) < static_cast<std::int32_t>(this->getReg(rt));
+    this->setReg(rd, static_cast<std::uint32_t>(value));
+}
