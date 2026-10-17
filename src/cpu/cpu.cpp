@@ -68,7 +68,7 @@ void CPU::decodeExec(Instruction& instruction) {
                 case 0x25:
                     this->OP_OR(instruction);
                     break;
-case 0x2A:
+                case 0x2A:
                     this->OP_SLT(instruction);
                     break;
                 case 0x2B:
@@ -86,7 +86,7 @@ case 0x2A:
         case 0x02:
             this->OP_J(instruction);
             break;
-case 0x03:
+        case 0x03:
             this->OP_JAL(instruction);
             break;
         case 0x04:
@@ -95,7 +95,7 @@ case 0x03:
         case 0x05:
             this->OP_BNE(instruction);
             break;
-case 0x06:
+        case 0x06:
             this->OP_BLEZ(instruction);
             break;
         case 0x07:
@@ -124,7 +124,7 @@ case 0x06:
             break;
         case 0x10:
             this->OP_COP0(instruction);
-break;
+            break;
         case 0x20:
             this->OP_LB(instruction);
             break;
@@ -227,6 +227,9 @@ void CPU::OP_OR(Instruction &instruction) {
 
 void CPU::OP_COP0(Instruction &instruction) {
     switch(instruction.rs()) {
+        case 0x0:
+            this->MFC0(instruction);
+            break;
         case 0x4:
             this->MTC0(instruction);
             break;
@@ -243,14 +246,58 @@ void CPU::MTC0(Instruction& instruction) {
     std::uint32_t value = getReg(rt);
 
     switch(rd) {
+        case 0x3:
+        case 0x5:
+        case 0x6:
+        case 0x7:
+        case 0x9:
+        case 0xB:
+            break;
         case 0xC:
             this->sr = value;
+            break;
+        case 0xD:
+            if (value != 0) {
+                std::cerr << "[CPU] Unhandled write to CAUSE register." << std::endl;
+                throw std::exception();
+            }
             break;
         default:
             std::cerr << "[CPU] Unhandled COP0 register: 0x" << std::hex << rd << std::endl;
             throw std::exception();
     }
 }
+
+void CPU::MFC0(Instruction& instruction) {
+    std::uint32_t rd = instruction.rd();
+    std::uint32_t rt = instruction.rt();
+
+    std::uint32_t value{};
+
+    switch(rd) {
+        case 0x3:
+        case 0x5:
+        case 0x6:
+        case 0x7:
+        case 0x9:
+        case 0xB:
+            break;
+        case 0xC:
+            value = this->sr;
+            break;
+        case 0xD:
+            if (value != 0) {
+                std::cerr << "[CPU] Unhandled readto CAUSE register." << std::endl;
+                throw std::exception();
+            }
+            break;
+        default:
+            std::cerr << "[CPU] Unhandled read from COP0 register: 0x" << std::hex << rd << std::endl;
+            throw std::exception();
+    }
+    this->load = {rt, value};
+}
+
 
 void CPU::OP_BNE(Instruction& instruction) {
     std::uint32_t imm_se = instruction.imm_se();

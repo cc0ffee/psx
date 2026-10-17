@@ -3,6 +3,7 @@
 #include "psx/instruction.hpp"
 #include <cstdint>
 #include <array>
+#include <utility>
 #include <optional>
 
 class CPU {
@@ -25,7 +26,14 @@ private:
     std::uint32_t hi{0xDEADBEEF};
     std::uint32_t lo{0xDEADBEEF};
 
+    std::uint32_t bpc{0};
+    std::uint32_t bda{0};
+    std::uint32_t tar{0};
+    std::uint32_t bdam{0};
+    std::uint32_t bpcm{0};
+    std::uint32_t dcic{0};
     std::uint32_t sr{0};
+    std::uint32_t epc{0};
 
     Bus& bus;
     void decodeExec(Instruction& instruction);
@@ -109,5 +117,6 @@ private:
     void OP_SWC3(Instruction& instruction);
 
     void MTC0(Instruction& instruction);
+    void MFC0(Instruction& instruction);
     void branch(std::uint32_t offset);
 };
