@@ -28,6 +28,12 @@ void CPU::decodeExec(Instruction& instruction) {
                 case 0x00:
                     this->OP_SLL(instruction);
                     break;
+                case 0x08:
+                    this->OP_JR(instruction);
+                    break;
+                case 0x09:
+                    this->OP_JALR(instruction);
+                    break;
                 case 0x25:
                     this->OP_OR(instruction);
                     break;
@@ -37,11 +43,29 @@ void CPU::decodeExec(Instruction& instruction) {
             }
             break;
         }
+        case 0x01:
+            this->OP_BCONDZ(instruction);
+            break;
         case 0x02:
             this->OP_J(instruction);
             break;
+case 0x03:
+            this->OP_JAL(instruction);
+            break;
+        case 0x04:
+            this->OP_BEQ(instruction);
+            break;
         case 0x05:
             this->OP_BNE(instruction);
+            break;
+case 0x06:
+            this->OP_BLEZ(instruction);
+            break;
+        case 0x07:
+            this->OP_BGTZ(instruction);
+            break;
+        case 0x08:
+            this->OP_ADDI(instruction);
             break;
         case 0x09:
             this->OP_ADDIU(instruction);
@@ -187,23 +211,69 @@ void CPU::OP_BEQ(Instruction& instruction) {
 }
 
 void CPU::OP_BGTZ(Instruction& instruction) {
-    std::uint32_t imm_se = instruction.imm_se();
-    std::uint32_t rs = instruction.rs();
+    const std::uint32_t imm_se = instruction.imm_se();
+    const std::uint32_t rs = instruction.rs();
 
-    if (this->getReg(rs) > 0) {
-        this->branch(imm_se);
+    const auto value = static_cast<std::int32_t>(getReg(rs));
+
+    if (value > 0) {
+        branch(imm_se);
     }
 }
 
 void CPU::OP_BLEZ(Instruction& instruction) {
-    std::uint32_t imm_se = instruction.imm_se();
-    std::uint32_t rs = instruction.rs();
+    const std::uint32_t imm_se = instruction.imm_se();
+    const std::uint32_t rs = instruction.rs();
 
-    if (this->getReg(rs) <= 0) {
-        this->branch(imm_se);
+    const auto value = static_cast<std::int32_t>(getReg(rs));
+
+    if (value <= 0) {
+        branch(imm_se);
     }
 }
 
 void CPU::branch(std::uint32_t offset) {
     delayed_branch = pc + (offset << 2);
 }
+void CPU::OP_JAL(Instruction& instruction) {
+    setReg(31, pc + 4);
+    OP_J(instruction);
+}
+void CPU::OP_JR(Instruction &instruction) {
+    std::uint32_t rs = instruction.rs();
+
+    this->delayed_branch = this->getReg(rs);
+}
+
+void CPU::OP_JALR(Instruction& instruction) {
+    const std::uint32_t rs = instruction.rs();
+    const std::uint32_t rd = instruction.rd();
+
+    const std::uint32_t target = getReg(rs);
+    const std::uint32_t ra = this->pc + 4;
+
+    setReg(rd, ra);
+    delayed_branch = target;
+}
+
+void CPU::OP_BCONDZ(Instruction& instruction) {
+    const std::uint32_t imm_se = instruction.imm_se();
+    const std::uint32_t rs = instruction.rs();
+    const std::uint32_t rt = instruction.rt();
+
+    const std::int32_t value = static_cast<std::int32_t>(getReg(rs));
+
+    const bool is_bgez = (rt & 1u) != 0;
+    const bool is_link = (rt & 0x10u) != 0;
+
+    const bool test = (value >= 0) == is_bgez;
+
+    if (is_link) {
+        setReg(31, pc + 4);
+    }
+
+    if (test) {
+        branch(imm_se);
+    }
+}
+
