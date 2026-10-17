@@ -4,11 +4,21 @@
 void CPU::run() {
     Instruction instruction(bus.read<std::uint32_t>(pc));
 
-    std::uint32_t next_pc = delayed_branch.value_or(this->pc + 4);
+    const std::uint32_t current_pc = pc;
+    const std::uint32_t next_pc = delayed_branch.value_or(current_pc + 4);
+
     delayed_branch.reset();
     pc = next_pc;
 
+    outRegs = gRegs;
+
+    setReg(load.first, load.second);
+    load = {0, 0};
+
     decodeExec(instruction);
+
+    gRegs = outRegs;
+    gRegs[0] = 0;
 }
 
 void CPU::decodeExec(Instruction& instruction) {
@@ -57,8 +67,8 @@ std::uint32_t CPU::getReg(std::uint32_t reg) {
     return this->gRegs[reg];
 }
 void CPU::setReg(std::uint32_t reg, const std::uint32_t &value) {
-    this->gRegs[reg] = value;
-    this->gRegs[0] = 0;
+    this->outRegs[reg] = value;
+    this->outRegs[0] = 0;
 }
 
 void CPU::OP_ORI(Instruction& instruction) {

@@ -15,13 +15,15 @@ public:
     };
     void run();
 private:
-    std::array<std::uint32_t, 32> gRegs{0};
+    std::array<std::uint32_t, 32> gRegs{};
+    std::array<std::uint32_t, 32> outRegs{};
     std::uint32_t pc{0xBFC00000};
     std::uint32_t next_pc{0xBFC00004};
     std::uint32_t current_pc{};
     std::optional<std::uint32_t> delayed_branch{};
-    std::uint32_t hi{};
-    std::uint32_t lo{};
+    std::pair<std::uint32_t, std::uint32_t> load = {0, 0};
+    std::uint32_t hi{0xDEADBEEF};
+    std::uint32_t lo{0xDEADBEEF};
 
     std::uint32_t sr{0};
 
