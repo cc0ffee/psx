@@ -1,5 +1,7 @@
 #include "../include/psx/cpu.hpp"
 #include <iostream>
+#include <limits>
+#include <stdexcept>
 
 void CPU::run() {
     Instruction instruction(bus.read<std::uint32_t>(pc));
@@ -20,7 +22,6 @@ void CPU::run() {
     gRegs = outRegs;
     gRegs[0] = 0;
 }
-
 void CPU::decodeExec(Instruction& instruction) {
     switch(instruction.op()) {
         case 0x00: {
@@ -78,6 +79,22 @@ case 0x06:
             break;
         case 0x10:
             this->OP_COP0(instruction);
+break;
+        case 0x20:
+            this->OP_LB(instruction);
+            break;
+        case 0x23:
+            this->OP_LW(instruction);
+            break;
+        case 0x24:
+            this->OP_LBU(instruction);
+            break;
+        case 0x28:
+            this->OP_SB(instruction);
+            break;
+        case 0x29:
+            this->OP_SH(instruction);
+            break;
         case 0x2B:
             this->OP_SW(instruction);
             break;
@@ -235,10 +252,59 @@ void CPU::OP_BLEZ(Instruction& instruction) {
 void CPU::branch(std::uint32_t offset) {
     delayed_branch = pc + (offset << 2);
 }
+
+void CPU::OP_LW(Instruction& instruction) {
+    if ((this->sr & 0x10000) != 0) {
+        std::cout << "[OP_LW -> STUB] Read while cache is isolated." << '\n';
+        return;
+    } 
+
+    std::uint32_t imm_se = instruction.imm_se();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::uint32_t addr = getReg(rs) + imm_se;
+
+    load = {rt, this->read<std::uint32_t>(addr)};
+}
+
+void CPU::OP_SH(Instruction& instruction) {
+    if ((this->sr & 0x10000) != 0) {
+        std::cout << "[OP_SH -> STUB] Write while cache is isolated." << '\n';
+        return;
+    } 
+
+    std::uint32_t imm_se = instruction.imm_se();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::uint32_t addr = getReg(rs) + imm_se;
+    auto value = getReg(rt);
+
+    this->write<std::uint16_t>(addr, value);
+}
+
 void CPU::OP_JAL(Instruction& instruction) {
     setReg(31, pc + 4);
     OP_J(instruction);
 }
+
+void CPU::OP_SB(Instruction& instruction) {
+    if ((this->sr & 0x10000) != 0) {
+        std::cout << "[OP_SB -> STUB] Write while cache is isolated." << '\n';
+        return;
+    } 
+
+    std::uint32_t imm_se = instruction.imm_se();
+    std::uint32_t rt = instruction.rt();
+    std::uint32_t rs = instruction.rs();
+
+    std::uint32_t addr = this->getReg(rs) + imm_se;
+    auto value = this->getReg(rt);
+
+    this->write<std::uint8_t>(addr, value);
+}
+
 void CPU::OP_JR(Instruction &instruction) {
     std::uint32_t rs = instruction.rs();
 
@@ -254,6 +320,40 @@ void CPU::OP_JALR(Instruction& instruction) {
 
     setReg(rd, ra);
     delayed_branch = target;
+}
+
+void CPU::OP_LB(Instruction& instruction) {
+    if ((this->sr & 0x10000) != 0) {
+        std::cout << "[OP_LB -> STUB] Read while cache is isolated.\n";
+        return;
+    }
+
+    const std::uint32_t rt = instruction.rt();
+    const std::uint32_t rs = instruction.rs();
+    const std::uint32_t imm_se = instruction.imm_se();
+
+    const std::uint32_t addr = getReg(rs) + imm_se;
+
+    const auto value = static_cast<std::uint32_t>(static_cast<std::int32_t>(static_cast<std::int8_t>(this->read<std::uint8_t>(addr))));
+
+    load = {rt, value};
+}
+
+void CPU::OP_LBU(Instruction& instruction) {
+    if ((this->sr & 0x10000) != 0) {
+        std::cout << "[OP_LBU -> STUB] Read while cache is isolated.\n";
+        return;
+    }
+
+    const std::uint32_t rt = instruction.rt();
+    const std::uint32_t rs = instruction.rs();
+    const std::uint32_t imm_se = instruction.imm_se();
+
+    const std::uint32_t addr = getReg(rs) + imm_se;
+
+    const auto value = static_cast<std::uint32_t>(this->read<std::uint8_t>(addr));
+
+    load = {rt, value};
 }
 
 void CPU::OP_BCONDZ(Instruction& instruction) {
